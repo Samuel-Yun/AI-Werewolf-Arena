@@ -1,0 +1,14 @@
+players:
+  - {seat: 1, name: ChatGPT, provider: mock, model: mock, persona: {archetype: logical}}
+  - {seat: 2, name: DeepSeek, provider: mock, model: mock, persona: {archetype: analyst}}
+  - {seat: 3, name: Claude, provider: mock, model: mock}
+  - {seat: 4, name: Gemini, provider: mock, model: mock}
+  - {seat: 5, name: Doubao, provider: mock, model: mock, persona: {archetype: entertainer}}
+  - {seat: 6, name: Qwen, provider: mock, model: mock}
+  - {seat: 7, name: Kimi, provider: mock, model: mock}
+  - {seat: 8, name: Grok, provider: mock, model: mock}
+  - {seat: 9, name: ChatGPT-B, provider: mock, model: mock}
+  - {seat: 10, name: DeepSeek-B, provider: mock, model: mock}
+  - {seat: 11, name: Claude-B, provider: mock, model: mock}
+  - {seat: 12, name: Gemini-B, provider: mock, model: mock}
+

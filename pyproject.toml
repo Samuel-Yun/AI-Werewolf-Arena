@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ai-werewolf-arena"
+version = "0.1.0"
+description = "An event-driven, reproducible werewolf game engine"
+requires-python = ">=3.12"
+dependencies = ["pydantic>=2.5,<3", "PyYAML>=6,<7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+
+[project.scripts]
+werewolf = "werewolf.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+

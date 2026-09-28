@@ -1,0 +1,13 @@
+players:
+  - {seat: 1, name: DeepSeek-01, provider: deepseek, model: deepseek-flash}
+  - {seat: 2, name: DeepSeek-02, provider: deepseek, model: deepseek-flash}
+  - {seat: 3, name: DeepSeek-03, provider: deepseek, model: deepseek-flash}
+  - {seat: 4, name: DeepSeek-04, provider: deepseek, model: deepseek-flash}
+  - {seat: 5, name: DeepSeek-05, provider: deepseek, model: deepseek-flash}
+  - {seat: 6, name: DeepSeek-06, provider: deepseek, model: deepseek-flash}
+  - {seat: 7, name: DeepSeek-07, provider: deepseek, model: deepseek-flash}
+  - {seat: 8, name: DeepSeek-08, provider: deepseek, model: deepseek-flash}
+  - {seat: 9, name: DeepSeek-09, provider: deepseek, model: deepseek-flash}
+  - {seat: 10, name: DeepSeek-10, provider: deepseek, model: deepseek-flash}
+  - {seat: 11, name: DeepSeek-11, provider: deepseek, model: deepseek-flash}
+  - {seat: 12, name: DeepSeek-12, provider: deepseek, model: deepseek-flash}

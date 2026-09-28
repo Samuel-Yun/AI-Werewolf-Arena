@@ -1,0 +1,12 @@
+name: phase2
+players: 12
+roles:
+  werewolf: 4
+  seer: 1
+  witch: 1
+  villager: 6
+wolf_win: parity
+witch:
+  self_save: first_night
+  allow_both_potions: false
+  see_victim_without_antidote: false

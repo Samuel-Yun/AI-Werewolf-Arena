@@ -1,0 +1,14 @@
+.venv/
+.uv-cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+data/games/
+data/simulations/
+build/
+dist/
+

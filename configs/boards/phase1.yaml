@@ -1,0 +1,12 @@
+name: phase1
+players: 12
+roles:
+  werewolf: 4
+  seer: 1
+  villager: 7
+wolf_win: parity
+vote_tie: no_exile
+max_days: 100
+max_events: 20000
+max_retries_per_action: 1
+

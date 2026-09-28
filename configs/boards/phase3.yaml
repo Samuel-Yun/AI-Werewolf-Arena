@@ -1,0 +1,17 @@
+name: phase3
+players: 12
+roles:
+  werewolf: 4
+  seer: 1
+  witch: 1
+  hunter: 1
+  idiot: 1
+  villager: 4
+wolf_win: parity
+witch:
+  self_save: first_night
+hunter:
+  allowed_causes: [wolf_kill, exile, hunter_shot]
+  blocked_causes: [poison]
+idiot:
+  exile_after_reveal: immune
