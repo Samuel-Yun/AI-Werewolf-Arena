@@ -22,6 +22,16 @@ class PublicState:
     dead: set[int] = field(default_factory=set)
     speeches: list[dict] = field(default_factory=list)
     votes: dict[int, int | None] = field(default_factory=dict)
+    previous_day_votes: dict[int, int | None] = field(default_factory=dict)
+    sheriff: int | None = None
+    sheriff_signup: dict[int, bool] = field(default_factory=dict)
+    sheriff_withdrawn: set[int] = field(default_factory=set)
+    sheriff_ballots: dict[int, int | None] = field(default_factory=dict)
+    sheriff_pk_candidates: tuple[int, ...] = ()
+    sheriff_pk_round: int = 0
+    speech_order: tuple[int, ...] = ()
+    public_deaths: list[dict] = field(default_factory=list)
+    exiles: list[dict] = field(default_factory=list)
     winner: Team | None = None
 
     @property
@@ -55,6 +65,10 @@ class SecretState:
     hunter_spent: set[int] = field(default_factory=set)
     death_skill_queue: list[int] = field(default_factory=list)
     death_skill_resume: Phase | None = None
+    badge_transfer_pending: int | None = None
+    wolf_chat_round: int = 1
+    pending_votes: dict[int, int | None] = field(default_factory=dict)
+    pending_sheriff_ballots: dict[int, int | None] = field(default_factory=dict)
     hybrid_models: dict[int, int] = field(default_factory=dict)
     hybrid_teams: dict[int, Team] = field(default_factory=dict)
     winning_players: list[int] = field(default_factory=list)

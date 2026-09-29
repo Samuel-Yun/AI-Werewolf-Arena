@@ -53,6 +53,18 @@ class HybridRules(BaseModel):
     reveal_alignment: bool = False
 
 
+class SheriffRules(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    enabled: bool = False
+    pk_rounds: int = Field(default=1, ge=0, le=2)
+
+
+class WolfChatRules(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+    enabled: bool = False
+    rounds: int = Field(default=2, ge=1, le=3)
+
+
 class BoardConfig(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
     name: str = Field(min_length=1)
@@ -62,7 +74,9 @@ class BoardConfig(BaseModel):
     hunter: HunterRules = Field(default_factory=HunterRules)
     idiot: IdiotRules = Field(default_factory=IdiotRules)
     hybrid: HybridRules = Field(default_factory=HybridRules)
-    wolf_win: Literal["parity", "eliminate_good"] = "parity"
+    sheriff: SheriffRules = Field(default_factory=SheriffRules)
+    wolf_chat: WolfChatRules = Field(default_factory=WolfChatRules)
+    wolf_win: Literal["parity", "eliminate_good", "slaughter"] = "parity"
     simultaneous_elimination: Team = Team.GOOD
     vote_tie: Literal["no_exile", "seeded_random"] = "no_exile"
     max_days: int = Field(default=100, ge=1)
@@ -86,6 +100,12 @@ class BoardConfig(BaseModel):
             raise ValueError("This board supports at most one hybrid")
         if self.roles.get(RoleName.HYBRID, 0) and self.hybrid.counts_for_win and self.wolf_win == "eliminate_good":
             raise ValueError("A non-attacking hybrid cannot participate in eliminate_good victory counts")
+        if self.wolf_win == "slaughter" and (self.players != 12 or wolves != 4 or
+                any(self.roles.get(role, 0) != 1 for role in (RoleName.SEER, RoleName.WITCH, RoleName.HUNTER, RoleName.IDIOT)) or
+                self.roles.get(RoleName.VILLAGER, 0) != 3 or self.roles.get(RoleName.HYBRID, 0) != 1):
+            raise ValueError("Slaughter board requires 4 wolves, 4 gods, 3 villagers and 1 hybrid")
+        if self.wolf_win == "slaughter" and self.hybrid != HybridRules():
+            raise ValueError("Slaughter board requires hidden follow-model hybrid with good seer result")
         return self
 
 

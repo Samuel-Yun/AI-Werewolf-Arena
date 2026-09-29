@@ -7,6 +7,38 @@ class ActionModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
 
+class WolfChatAction(ActionModel):
+    action: Literal["wolf_chat"] = "wolf_chat"
+    text: str = Field(min_length=1, max_length=500, strict=True)
+    target: StrictInt | None = None
+
+
+class SheriffSignupAction(ActionModel):
+    action: Literal["sheriff_signup"] = "sheriff_signup"
+    run: bool
+
+
+class SheriffWithdrawAction(ActionModel):
+    action: Literal["sheriff_withdraw"] = "sheriff_withdraw"
+    withdraw: bool
+
+
+class SheriffVoteAction(ActionModel):
+    action: Literal["sheriff_vote"] = "sheriff_vote"
+    target: StrictInt | None
+
+
+class SpeechOrderAction(ActionModel):
+    action: Literal["speech_order"] = "speech_order"
+    start: StrictInt
+    direction: Literal["clockwise", "counterclockwise"]
+
+
+class BadgeTransferAction(ActionModel):
+    action: Literal["badge_transfer"] = "badge_transfer"
+    target: StrictInt | None
+
+
 class WolfKillAction(ActionModel):
     action: Literal["wolf_kill"] = "wolf_kill"
     target: StrictInt
@@ -56,7 +88,7 @@ class SkipSpeechAction(ActionModel):
 
 
 Action = Annotated[
-    WolfKillAction | SeerCheckAction | WitchAction | HunterShotAction | HybridChooseAction | VoteAction | SpeechAction | SkipSpeechAction,
+    WolfChatAction | SheriffSignupAction | SheriffWithdrawAction | SheriffVoteAction | SpeechOrderAction | BadgeTransferAction | WolfKillAction | SeerCheckAction | WitchAction | HunterShotAction | HybridChooseAction | VoteAction | SpeechAction | SkipSpeechAction,
     Field(discriminator="action"),
 ]
 ACTION_ADAPTER = TypeAdapter(Action)

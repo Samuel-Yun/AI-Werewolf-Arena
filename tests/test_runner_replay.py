@@ -56,9 +56,10 @@ def test_storage_transcript_and_replay(board, tmp_path):
     engine = AutoRunner(GameEngine(board, 123)).run()
     directory = GameStore(tmp_path).save(engine)
     assert {p.name for p in directory.iterdir()} == {
-        "metadata.json", "events.jsonl", "transcript.txt", "result.json"
+        "metadata.json", "events.jsonl", "transcript.txt", "public_transcript.txt", "result.json"
     }
-    assert "Vote:" in (directory / "transcript.txt").read_text(encoding="utf-8")
+    assert "Vote:" in (directory / "public_transcript.txt").read_text(encoding="utf-8")
+    assert "真实身份：" in (directory / "transcript.txt").read_text(encoding="utf-8")
     assert state_document(replay_directory(directory)) == state_document(engine.state)
     with pytest.raises(FileExistsError):
         GameStore(tmp_path).save(engine)

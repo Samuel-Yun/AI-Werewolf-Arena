@@ -1,5 +1,7 @@
 # 里程碑验收记录
 
+下表是正式屠边、警长和狼聊规则加入之前的历史验收结果，不代表当前正式板的胜率。当前规则见 [full-board-rules.md](full-board-rules.md)。
+
 环境：Python 3.13，工作区 `.venv`，全部使用 MockProvider。每个阶段都在通过测试和完整 demo 后推进。
 
 | 阶段 | 测试通过数 | Demo seed | Demo 结果 | Simulation |

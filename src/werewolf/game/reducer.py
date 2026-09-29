@@ -28,14 +28,57 @@ def apply_event(state: GameState, event: Event) -> None:
                 raise ReplayError(f"Illegal transition {public.phase} -> {next_phase}")
             public.phase = next_phase
             state.submitted = set()
-            if event.phase == Phase.DEATH_SKILL:
+            if next_phase in {Phase.SHERIFF_VOTE, Phase.SHERIFF_PK_VOTE}:
+                public.sheriff_ballots = {}
+                secret.pending_sheriff_ballots = {}
+            if event.phase == Phase.BADGE_TRANSFER or (
+                    event.phase == Phase.DEATH_SKILL and next_phase != Phase.BADGE_TRANSFER):
                 secret.death_skill_resume = None
         case EventType.NIGHT_STARTED:
             public.day += 1
+            public.previous_day_votes = dict(public.votes)
             public.votes = {}
+            secret.pending_votes = {}
+            public.speech_order = ()
+            secret.wolf_chat_round = 1
             secret.night = NightActions()
             secret.night_deaths = []
             secret.night_causes = {}
+        case EventType.WOLF_CHAT_MESSAGE:
+            state.submitted.add(event.actor)
+        case EventType.WOLF_CHAT_ROUND_ENDED:
+            secret.wolf_chat_round += 1
+            state.submitted = set()
+        case EventType.SHERIFF_SIGNUP:
+            public.sheriff_signup[event.actor] = bool(payload["run"])
+            state.submitted.add(event.actor)
+        case EventType.SHERIFF_WITHDREW:
+            if payload["withdraw"]:
+                public.sheriff_withdrawn.add(event.actor)
+            state.submitted.add(event.actor)
+        case EventType.SHERIFF_BALLOT:
+            if event.visibility == "PUBLIC":  # Historical logs.
+                public.sheriff_ballots[event.actor] = event.target
+            else:
+                secret.pending_sheriff_ballots[event.actor] = event.target
+            state.submitted.add(event.actor)
+        case EventType.SHERIFF_BALLOTS_REVEALED:
+            public.sheriff_ballots = {int(s): t for s, t in payload["ballots"].items()}
+            secret.pending_sheriff_ballots = {}
+        case EventType.SHERIFF_PK_STARTED:
+            public.sheriff_pk_candidates = tuple(payload["candidates"])
+            public.sheriff_pk_round += 1
+        case EventType.SHERIFF_ELECTED:
+            public.sheriff = event.target
+        case EventType.SPEECH_ORDER_CHOSEN:
+            public.speech_order = tuple(payload["order"])
+            state.submitted.add(event.actor)
+        case EventType.BADGE_TRANSFERRED:
+            public.sheriff = event.target
+            secret.badge_transfer_pending = None
+            state.submitted.add(event.actor)
+        case EventType.WITCH_WINDOW_OPENED:
+            pass
         case EventType.WOLF_VOTE_SUBMITTED:
             secret.night.wolf_votes[event.actor] = event.target
             state.submitted.add(event.actor)
@@ -85,6 +128,9 @@ def apply_event(state: GameState, event: Event) -> None:
             player.alive = False
             player.can_vote = False
             public.dead.add(event.target)
+            public.public_deaths.append({"day": public.day, "seat": event.target, "phase": event.phase})
+            if public.sheriff == event.target:
+                secret.badge_transfer_pending = event.target
         case EventType.PLAYER_SPOKE:
             public.speeches.append({"day": public.day, "seat": event.actor, "text": payload["text"]})
             state.submitted.add(event.actor)
@@ -92,13 +138,21 @@ def apply_event(state: GameState, event: Event) -> None:
             public.speeches.append({"day": public.day, "seat": event.actor, "text": "[跳过发言]"})
             state.submitted.add(event.actor)
         case EventType.VOTE_SUBMITTED:
-            public.votes[event.actor] = event.target
+            if event.visibility == "PUBLIC":  # Historical logs.
+                public.votes[event.actor] = event.target
+            else:
+                secret.pending_votes[event.actor] = event.target
             state.submitted.add(event.actor)
+        case EventType.VOTES_REVEALED:
+            public.votes = {int(s): t for s, t in payload["votes"].items()}
+            secret.pending_votes = {}
         case EventType.GAME_ENDED:
             public.winner = Team(payload["winner"])
         case EventType.WINNERS_DETERMINED:
             secret.winning_players = list(payload["seats"])
-        case EventType.DAY_STARTED | EventType.PLAYER_EXILED | EventType.EXILE_SKIPPED:
+        case EventType.PLAYER_EXILED:
+            public.exiles.append({"day": public.day, "seat": event.target})
+        case EventType.DAY_STARTED | EventType.EXILE_SKIPPED | EventType.EXILE_TALLY:
             pass
         case EventType.ACTION_REJECTED | EventType.FALLBACK_USED | EventType.DIRECTOR_DECISION:
             pass

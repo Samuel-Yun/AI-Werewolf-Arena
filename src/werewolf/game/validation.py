@@ -32,6 +32,17 @@ def validate_game_state(state: GameState) -> None:
         if public.phase == Phase.VOTING:
             require(actor in alive and public.players[actor].can_vote, "Ineligible voter")
             require(target is None or target in alive and target != actor, "Illegal active vote target")
+    for actor, target in secret.pending_votes.items():
+        require(public.phase == Phase.VOTING and actor in alive and public.players[actor].can_vote,
+                "Ineligible pending voter")
+        require(target is None or target in alive and target != actor, "Invalid pending vote target")
+    for actor, target in secret.pending_sheriff_ballots.items():
+        require(public.phase in {Phase.SHERIFF_VOTE, Phase.SHERIFF_PK_VOTE} and actor in alive,
+                "Ineligible pending sheriff voter")
+        eligible = (set(public.sheriff_pk_candidates) if public.phase == Phase.SHERIFF_PK_VOTE else
+                    {s for s, run in public.sheriff_signup.items() if run and s not in public.sheriff_withdrawn})
+        require(not public.sheriff_signup.get(actor, False), "Candidate cast sheriff ballot")
+        require(target is None or target in alive and target in eligible, "Invalid pending sheriff target")
     if secret.night.wolf_target is not None:
         require(secret.night.wolf_target in seats, "Unknown wolf target")
         require(secret.roles[secret.night.wolf_target] != RoleName.WEREWOLF, "Wolf target is a teammate")
@@ -59,8 +70,23 @@ def validate_game_state(state: GameState) -> None:
     require(not set(queue) & secret.hunter_spent, "Hunter can shoot only once")
     for seat in (*queue, *secret.hunter_spent):
         require(secret.roles.get(seat) == RoleName.HUNTER, "Non-hunter has a death skill")
-    if public.phase == Phase.DEATH_SKILL:
+    if public.phase in {Phase.DEATH_SKILL, Phase.BADGE_TRANSFER}:
         require(secret.death_skill_resume in {Phase.NIGHT_WIN_CHECK, Phase.DAY_WIN_CHECK}, "Invalid skill continuation")
+    if public.phase == Phase.BADGE_TRANSFER:
+        require(secret.badge_transfer_pending is not None or bool(state.submitted),
+                "Missing badge holder")
+    if secret.badge_transfer_pending is not None:
+        require(secret.badge_transfer_pending == public.sheriff and
+                secret.badge_transfer_pending in public.dead, "Invalid pending badge transfer")
+    if public.sheriff is not None:
+        require(public.sheriff in seats, "Unknown sheriff")
+    require(set(public.sheriff_signup) <= seats, "Unknown sheriff candidate")
+    require(public.sheriff_withdrawn <= set(public.sheriff_signup), "Unknown withdrawal")
+    require(set(public.sheriff_ballots) <= seats, "Unknown sheriff voter")
+    require(set(public.sheriff_pk_candidates) <= seats, "Unknown PK candidate")
+    require(set(public.speech_order) <= seats and len(public.speech_order) == len(set(public.speech_order)),
+            "Invalid speech order")
+    require(1 <= secret.wolf_chat_round <= state.board.wolf_chat.rounds, "Invalid wolf chat round")
     for seat, player in public.players.items():
         if player.revealed_role == RoleName.IDIOT:
             require(not player.can_vote, "Revealed idiot cannot vote")

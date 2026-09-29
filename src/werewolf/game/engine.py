@@ -83,6 +83,32 @@ class GameEngine:
     def submit(self, seat: int, raw: object) -> None:
         action = self.validate(seat, raw)
         match action.action:
+            case "wolf_chat":
+                self.emit(E.WOLF_CHAT_MESSAGE, actor=seat, target=action.target,
+                          visibility=V.PRIVATE_WOLVES,
+                          payload={"text": action.text, "round": self._state.secret.wolf_chat_round})
+            case "sheriff_signup":
+                self.emit(E.SHERIFF_SIGNUP, actor=seat, visibility=V.PUBLIC, payload={"run": action.run})
+            case "sheriff_withdraw":
+                self.emit(E.SHERIFF_WITHDREW, actor=seat, visibility=V.PUBLIC,
+                          payload={"withdraw": action.withdraw})
+            case "sheriff_vote":
+                self.emit(E.SHERIFF_BALLOT, actor=seat, target=action.target)
+            case "speech_order":
+                seats = list(range(1, self._state.board.players + 1))
+                step = 1 if action.direction == "clockwise" else -1
+                cursor = action.start - 1
+                order = []
+                for _ in seats:
+                    current = seats[cursor]
+                    if current in self._state.public.alive and current != seat:
+                        order.append(current)
+                    cursor = (cursor + step) % len(seats)
+                order.append(seat)
+                self.emit(E.SPEECH_ORDER_CHOSEN, actor=seat, visibility=V.PUBLIC,
+                          payload={"start": action.start, "direction": action.direction, "order": order})
+            case "badge_transfer":
+                self.emit(E.BADGE_TRANSFERRED, actor=seat, target=action.target, visibility=V.PUBLIC)
             case "wolf_kill":
                 self.emit(E.WOLF_VOTE_SUBMITTED, actor=seat, target=action.target,
                           visibility=V.PRIVATE_WOLVES)
@@ -102,8 +128,7 @@ class GameEngine:
             case "skip_speech":
                 self.emit(E.PLAYER_SKIPPED, actor=seat, visibility=V.PUBLIC)
             case "vote":
-                self.emit(E.VOTE_SUBMITTED, actor=seat, target=action.target,
-                          visibility=V.PUBLIC)
+                self.emit(E.VOTE_SUBMITTED, actor=seat, target=action.target)
             case "hunter_shot":
                 self.emit(E.HUNTER_SHOT, actor=seat, target=action.target, visibility=V.PUBLIC)
                 if action.target is not None:

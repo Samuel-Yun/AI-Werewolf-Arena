@@ -77,10 +77,11 @@ python -m werewolf replay data/games/<game_id>
 
 - `metadata.json`：种子、板型、固定玩家。
 - `events.jsonl`：包括私密信息的完整引擎审计日志。
-- `transcript.txt`：仅公开发言、投票和结果，供后续字幕使用。
+- `transcript.txt`：含真实身份与私有夜间行动的导演复盘（含剧透）。
+- `public_transcript.txt`：仅公开公告、发言、揭晓票型和结果，供玩家与字幕使用。
 - `result.json`：结果和完整最终状态，供 Replay 比对。
 
-`events.jsonl` 和 `result.json` 是上帝视角文件，应由受信任的控制器读取，不进入 Agent 提示词。
+`events.jsonl`、`result.json` 和 `transcript.txt` 是上帝视角文件，应由受信任的控制器读取，不进入 Agent 提示词。
 
 事件包含版本、序号、游戏 ID、日数、阶段、类型、actor、target、visibility、recipients、payload 和 UTC 时间。Replay 使用同一 reducer，验证连续序号、游戏 ID、阶段顺序和状态不变量，并和保存的最终状态比对。
 
@@ -88,7 +89,7 @@ python -m werewolf replay data/games/<game_id>
 
 Simulation 使用 `seed, seed+1, ...`，正常局只汇总统计，失败局保存完整日志和 `diagnostic.json`。报告包含完成数、崩溃数、不变量错误、平均/最大日数、阵营胜率和保护上限触发数；失败返回非零退出码。
 
-`MAX_DAYS`、`MAX_EVENTS`、行动修正次数由 BoardConfig 配置。达到上限直接报告失败，绝不伪造胜者。当前 `deadlocks` 统计保护上限触发；真实 Provider 尚未接入。
+`MAX_DAYS`、`MAX_EVENTS`、行动修正次数由 BoardConfig 配置。达到上限直接报告失败，绝不伪造胜者。当前 `deadlocks` 统计保护上限触发；批量模拟仍只使用 MockProvider。
 
 ## 渐进里程碑
 
@@ -124,7 +125,7 @@ python -m werewolf play --mock --seed 123 --board configs/boards/phase3.yaml
 
 ### 预女猎白混与混血儿规则
 
-完整板型为 4 狼、1 预言家、1 女巫、1 猎人、1 白痴、3 平民、1 混血儿。CLI 默认保留 Phase 1 基础板；通过 `--board` 使用正式完整板。
+完整板型为 4 狼、1 预言家、1 女巫、1 猎人、1 白痴、3 平民、1 混血儿。正式板使用屠神／屠民、首日警长竞选、警长 1.5 票及每夜两轮狼队私聊；详细契约见 [docs/full-board-rules.md](docs/full-board-rules.md)。历史错位调查见 [docs/historical-investigation.md](docs/historical-investigation.md)。CLI 默认保留 Phase 1 基础板；通过 `--board` 使用正式完整板。
 
 混血儿在首夜、狼队行动之前选择其他玩家为榜样，只能选择一次。默认跟随榜样的初始阵营，榜样死亡后不改变阵营。混血儿不是额外狼人，不加入狼队刀人，也不知道狼队、榜样身份或自身阵营；默认预言家查验为好人。
 
@@ -138,7 +139,7 @@ python -m werewolf play --mock --seed 123 --board configs/boards/phase3.yaml
 | `seer_result` | 配置验人结果 `good` / `wolf`，与所属阵营解耦 |
 | `reveal_alignment` | 默认 `false`；设为 `true` 才向混血儿本人提供阵营 |
 
-默认全局胜负只比较基础狼人和基础好人数。个人胜利包括阵营胜利中的死亡玩家。个人胜者保存在引擎日志和最终状态中，不向 Agent 公布以免泄漏身份；Simulation 额外统计 `hybrid_wins`，它不属于互斥的阵营胜局统计。
+正式完整板按固定角色类别屠边：四名实际狼人全死则好人胜，四神或四民全死则狼人胜；混血儿始终计入民边，与隐藏阵营无关。其他旧板型仍按各自配置的胜负规则。个人胜利包括阵营胜利中的死亡玩家。个人胜者保存在引擎日志和最终状态中，不向 Agent 公布以免泄漏身份；Simulation 额外统计 `hybrid_wins`，它不属于互斥的阵营胜局统计。
 
 `eliminate_good` 不允许与计入人数的无刀人能力混血儿组合，以避免仅剩混血儿与一名好人时投票永久平局。配置加载时明确拒绝这种组合。
 
@@ -154,7 +155,7 @@ python -m werewolf play --mode director --mock --seed 123
 python -m werewolf play --mode director --mock --seed 123 --board configs/boards/seer_witch_hunter_idiot_hybrid.yaml
 ```
 
-每次白天发言在发布之前暂停，展示座位、嘉宾、草稿和导演身份视角：
+每次候选人或白天发言在发布之前暂停，展示座位、嘉宾、草稿和导演身份视角：
 
 - A：接受当前发言。
 - R：用相同合法上下文重新生成。

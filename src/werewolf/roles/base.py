@@ -17,6 +17,21 @@ class RoleName(StrEnum):
     VILLAGER = "villager"
 
 
+
+class SlaughterSide(StrEnum):
+    WOLF = "wolf"
+    GOD = "god"
+    CIVILIAN = "civilian"
+
+
+def slaughter_side(role: RoleName) -> SlaughterSide:
+    if role == RoleName.WEREWOLF:
+        return SlaughterSide.WOLF
+    if role in {RoleName.SEER, RoleName.WITCH, RoleName.HUNTER, RoleName.IDIOT}:
+        return SlaughterSide.GOD
+    return SlaughterSide.CIVILIAN
+
+
 @dataclass(frozen=True)
 class Role:
     name: RoleName

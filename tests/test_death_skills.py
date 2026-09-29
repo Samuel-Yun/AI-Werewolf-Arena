@@ -157,10 +157,14 @@ def test_idiot_survives_exile_loses_vote_but_keeps_speaking():
     engine.advance()
     complete_night(engine, kill=10)
     assert engine.state.public.players[8].alive
+    for seat in engine.state.public.alive:
+        if seat == 8:
+            break
+        engine.submit(seat, {"action": "speech", "text": "过。"})
     assert legal_actions(engine.state, 8)[0].action == "speech"
     engine.submit(8, {"action": "speech", "text": "我已经翻牌了，继续听你们聊。"})
     for seat in engine.state.public.alive:
-        if seat != 8:
+        if seat > 8:
             engine.submit(seat, {"action": "speech", "text": "过。"})
     engine.advance()
     with pytest.raises(IllegalAction):

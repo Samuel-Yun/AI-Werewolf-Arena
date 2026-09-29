@@ -35,6 +35,14 @@ class PublicView(FrozenView):
     players: tuple[PublicPlayerView, ...]
     speeches: tuple[SpeechView, ...]
     votes: tuple[tuple[int, int | None], ...]
+    previous_day_votes: tuple[tuple[int, int | None], ...] = ()
+    sheriff: int | None = None
+    sheriff_signup: tuple[tuple[int, bool], ...] = ()
+    sheriff_ballots: tuple[tuple[int, int | None], ...] = ()
+    sheriff_pk_candidates: tuple[int, ...] = ()
+    speech_order: tuple[int, ...] = ()
+    deaths: tuple[tuple[int, int, str], ...] = ()
+    exiles: tuple[tuple[int, int], ...] = ()
     winner: Team | None
 
     @property
@@ -49,6 +57,7 @@ class CheckView(FrozenView):
 
 
 class VisibleEvent(FrozenView):
+    visibility: Visibility
     day: int
     event_type: EventType
     actor: int | None
@@ -65,6 +74,7 @@ class OwnInformation(FrozenView):
     poison: int | None = None
     wolf_victim: int | None = None
     hybrid_model: int | None = None
+    wolf_chat_round: int | None = None
 
 
 class PlayerBelief(FrozenView):
@@ -93,13 +103,15 @@ def build_context_for_player(state: GameState, events: tuple[Event, ...], seat: 
                      if e.event_type == EventType.PLAYER_DIED and e.target == seat), None)
     visible = []
     for event in events:
+        if event.event_id > state.event_count:
+            break
         private_allowed = death_id is None or event.event_id <= death_id
         allowed = event.visibility == Visibility.PUBLIC
         allowed |= private_allowed and event.visibility == Visibility.PRIVATE_PLAYER and seat in event.recipients
         allowed |= private_allowed and event.visibility == Visibility.PRIVATE_WOLVES and role == RoleName.WEREWOLF
         if allowed:
             visible.append(VisibleEvent(
-                day=event.day, event_type=event.event_type, actor=event.actor, target=event.target,
+                visibility=event.visibility, day=event.day, event_type=event.event_type, actor=event.actor, target=event.target,
                 payload_json=json.dumps(event.payload, ensure_ascii=False, sort_keys=True),
             ))
     return AgentContext(
@@ -108,12 +120,23 @@ def build_context_for_player(state: GameState, events: tuple[Event, ...], seat: 
             day=state.public.day, phase=state.public.phase,
             players=tuple(PublicPlayerView(**vars(p)) for _, p in sorted(state.public.players.items())),
             speeches=tuple(SpeechView(**s) for s in state.public.speeches),
-            votes=tuple(sorted(state.public.votes.items())), winner=state.public.winner,
+            votes=tuple(sorted(state.public.votes.items())),
+            previous_day_votes=tuple(sorted(state.public.previous_day_votes.items())),
+            sheriff=state.public.sheriff,
+            sheriff_signup=tuple(sorted(state.public.sheriff_signup.items())),
+            sheriff_ballots=tuple(sorted(state.public.sheriff_ballots.items())),
+            sheriff_pk_candidates=state.public.sheriff_pk_candidates,
+            speech_order=state.public.speech_order,
+            deaths=tuple((d["day"], d["seat"], str(d["phase"])) for d in state.public.public_deaths),
+            exiles=tuple((d["day"], d["seat"]) for d in state.public.exiles),
+            winner=state.public.winner,
         ),
         own=OwnInformation(
             role=role, team=effective_team(state, seat)
                 if role != RoleName.HYBRID or state.board.hybrid.reveal_alignment else None,
             hybrid_model=state.secret.hybrid_models.get(seat),
+            wolf_chat_round=state.secret.wolf_chat_round
+                if role == RoleName.WEREWOLF and state.public.phase == Phase.WOLF_CHAT else None,
             wolf_teammates=tuple(s for s, r in sorted(state.secret.roles.items())
                                  if r == RoleName.WEREWOLF) if role == RoleName.WEREWOLF else (),
             checks=tuple(CheckView(**c) for c in state.secret.check_history.get(seat, [])),

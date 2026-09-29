@@ -8,7 +8,13 @@ roles:
   idiot: 1
   villager: 3
   hybrid: 1
-wolf_win: parity
+wolf_win: slaughter
+sheriff:
+  enabled: true
+  pk_rounds: 1
+wolf_chat:
+  enabled: true
+  rounds: 2
 vote_tie: no_exile
 witch:
   self_save: first_night

@@ -1,10 +1,22 @@
 from werewolf.game.state import GameState
 from werewolf.roles import ROLES, Team
 from werewolf.roles import RoleName
+from werewolf.roles.base import SlaughterSide, slaughter_side
 from werewolf.roles.alignment import counts_for_win, effective_team
 
 
 def check_winner(state: GameState) -> Team | None:
+    if state.board.wolf_win == "slaughter":
+        alive_sides = {slaughter_side(state.secret.roles[s]) for s in state.public.alive}
+        good_won = SlaughterSide.WOLF not in alive_sides
+        wolf_won = SlaughterSide.GOD not in alive_sides or SlaughterSide.CIVILIAN not in alive_sides
+        if good_won and wolf_won:
+            return state.board.simultaneous_elimination
+        if good_won:
+            return Team.GOOD
+        if wolf_won:
+            return Team.WOLF
+        return None
     counted = [s for s in state.public.alive if counts_for_win(state, s)]
     wolves = sum(effective_team(state, s) == Team.WOLF for s in counted)
     good = len(counted) - wolves
